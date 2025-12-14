@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Security
+from fastapi.security.api_key import APIKeyHeader
 from fastapi.responses import Response
 import uvicorn
 from ultralytics import YOLO
@@ -7,9 +8,30 @@ import numpy as np
 import torch
 import io
 import time
+import os
 
 app = FastAPI()
 
+# --- API Security ---
+API_KEY_NAME = "x-api-key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    # 1. Get key from environment (set this in Render Dashboard)
+    expected_key = os.getenv("API_KEY")
+    
+    # 2. If no key is set in Render, allow everyone (Dev mode)
+    if not expected_key:
+        return True
+
+    # 3. If key is set, check if header matches
+    if api_key_header == expected_key:
+        return True
+    
+    raise HTTPException(
+        status_code=403,
+        detail="Could not validate credentials"
+    )
 
 @app.get("/")
 def read_root():
@@ -38,7 +60,7 @@ def load_model():
 
 
 @app.post("/segment/image")
-async def segment_image(file: UploadFile = File(...)):
+async def segment_image(file: UploadFile = File(...), authorized: bool = Depends(get_api_key)):
     """
     Accepts an image file, runs segmentation, and returns the annotated image.
     """
@@ -63,7 +85,7 @@ async def segment_image(file: UploadFile = File(...)):
 
 
 @app.post("/segment/json")
-async def segment_json(file: UploadFile = File(...)):
+async def segment_json(file: UploadFile = File(...), authorized: bool = Depends(get_api_key)):
     """
     Returns the segmentation masks/polygons as JSON data (for hitboxes).
     """
