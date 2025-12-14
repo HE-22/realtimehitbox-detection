@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: realtimehitbox-api
+    env: docker
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 8000
+
+
