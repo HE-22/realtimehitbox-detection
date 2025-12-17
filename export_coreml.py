@@ -11,3 +11,4 @@ print("Exporting model to CoreML...")
 model.export(format="coreml", nms=True)
 print("Export complete! Look for 'yolov8n-seg.mlpackage' in your folder.")
 
+

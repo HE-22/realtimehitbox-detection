@@ -85,3 +85,4 @@ export async function checkHit(imageUri: string, tapX: number, tapY: number, scr
 
 
 
+
